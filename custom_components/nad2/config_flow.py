@@ -5,8 +5,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import NADApiClient
-from .const import CONF_PASSWORD
-from .const import CONF_USERNAME
+from .const import CONF_IP_ADDRESS
 from .const import DOMAIN
 from .const import PLATFORMS
 
@@ -25,17 +24,11 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user."""
         self._errors = {}
 
-        # Uncomment the next 2 lines if only a single instance of the integration is allowed:
-        # if self._async_current_entries():
-        #     return self.async_abort(reason="single_instance_allowed")
-
         if user_input is not None:
-            valid = await self._test_credentials(
-                user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
-            )
+            valid = await self._test_credentials(user_input[CONF_IP_ADDRESS])
             if valid:
                 return self.async_create_entry(
-                    title=user_input[CONF_USERNAME], data=user_input
+                    title=user_input[CONF_IP_ADDRESS], data=user_input
                 )
             else:
                 self._errors["base"] = "auth"
@@ -53,18 +46,15 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Show the configuration form to edit location data."""
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema(
-                {vol.Required(CONF_USERNAME): str, vol.Required(CONF_PASSWORD): str}
-            ),
+            data_schema=vol.Schema({vol.Required(CONF_IP_ADDRESS): str}),
             errors=self._errors,
         )
 
-    async def _test_credentials(self, username, password):
+    async def _test_credentials(self, ip_address):
         """Return true if credentials is valid."""
         try:
-            session = async_create_clientsession(self.hass)
-            client = NADApiClient(username, password, session)
-            await client.async_get_data()
+            api = NADApiClient()
+            api.async_autodiscover()
             return True
         except Exception:  # pylint: disable=broad-except
             pass

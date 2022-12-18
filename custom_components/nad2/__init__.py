@@ -17,11 +17,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .api import NADApiClient
-from .const import CONF_PASSWORD
-from .const import CONF_USERNAME
+from .const import CONF_IP_ADDRESS
 from .const import DOMAIN
 from .const import PLATFORMS
-from .const import STARTUP_MESSAGE
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -37,15 +35,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up this integration using UI."""
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
-        _LOGGER.info(STARTUP_MESSAGE)
 
-    username = entry.data.get(CONF_USERNAME)
-    password = entry.data.get(CONF_PASSWORD)
+    ip_address = entry.data.get(CONF_IP_ADDRESS)
+    api = NADApiClient(ip_address)
 
-    session = async_get_clientsession(hass)
-    client = NADApiClient(username, password, session)
-
-    coordinator = NADDataUpdateCoordinator(hass, client=client)
+    coordinator = NADDataUpdateCoordinator(hass, client=api)
     await coordinator.async_refresh()
 
     if not coordinator.last_update_success:

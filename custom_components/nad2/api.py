@@ -1,12 +1,17 @@
 """Sample API Client."""
-import asyncio
 import logging
-import socket
+from asyncio import TimeoutError
+from async_timeout import timeout
 
-import aiohttp
-import async_timeout
+from zeroconf import Zeroconf, ServiceStateChange, IPVersion
+from zeroconf.asyncio import (
+    AsyncServiceBrowser,
+    AsyncServiceInfo,
+    AsyncZeroconf,
+)
 
-TIMEOUT = 10
+API_TIMEOUT = 10
+DISCOVERY_TIMEOUT = 5
 
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -15,61 +20,48 @@ HEADERS = {"Content-type": "application/json; charset=UTF-8"}
 
 
 class NADApiClient:
-    def __init__(
-        self, username: str, password: str, session: aiohttp.ClientSession
-    ) -> None:
+    def __init__(self, ip_address: str = None) -> None:
         """Sample API Client."""
-        self._username = username
-        self._passeword = password
-        self._session = session
+        _LOGGER.debug("API init")
+        self._ip_address = ip_address
 
     async def async_get_data(self) -> dict:
-        """Get data from the API."""
-        url = "https://jsonplaceholder.typicode.com/posts/1"
-        return await self.api_wrapper("get", url)
-
-    async def async_set_title(self, value: str) -> None:
-        """Get data from the API."""
-        url = "https://jsonplaceholder.typicode.com/posts/1"
-        await self.api_wrapper("patch", url, data={"title": value}, headers=HEADERS)
-
-    async def api_wrapper(
-        self, method: str, url: str, data: dict = {}, headers: dict = {}
-    ) -> dict:
-        """Get information from the API."""
+        """Get tank data from the API"""
         try:
-            async with async_timeout.timeout(TIMEOUT, loop=asyncio.get_event_loop()):
-                if method == "get":
-                    response = await self._session.get(url, headers=headers)
-                    return await response.json()
+            async with timeout(API_TIMEOUT):
+                pass
+        # except APIError as e:
+        #     _LOGGER.error("API error connectiong to %s: %s", self.ip_address, str(e))
+        except TimeoutError:
+            _LOGGER.error("Timeout error connecting to %s", self.ip_address)
+        except Exception as e:  # pylint: disable=broad-except
+            _LOGGER.error("Unhandled error connecting to %s: %s", self.ip_address, e)
 
-                elif method == "put":
-                    await self._session.put(url, headers=headers, json=data)
+    def service_change_hander(
+        self,
+        zeroconf: Zeroconf,
+        service_type: str,
+        name: str,
+        state_change: ServiceStateChange,
+    ) -> None:
+        _LOGGER.debug(
+            "Service %s of type %s state changed: %s", name, service_type, state_change
+        )
+        self._ip_address = "DISCOVER"
 
-                elif method == "patch":
-                    await self._session.patch(url, headers=headers, json=data)
-
-                elif method == "post":
-                    await self._session.post(url, headers=headers, json=data)
-
-        except asyncio.TimeoutError as exception:
-            _LOGGER.error(
-                "Timeout error fetching information from %s - %s",
-                url,
-                exception,
-            )
-
-        except (KeyError, TypeError) as exception:
-            _LOGGER.error(
-                "Error parsing information from %s - %s",
-                url,
-                exception,
-            )
-        except (aiohttp.ClientError, socket.gaierror) as exception:
-            _LOGGER.error(
-                "Error fetching information from %s - %s",
-                url,
-                exception,
-            )
-        except Exception as exception:  # pylint: disable=broad-except
-            _LOGGER.error("Something really wrong happened! - %s", exception)
+    async def async_autodiscover(self):
+        try:
+            _LOGGER.debug("Starting auto-discovery")
+            async with timeout(DISCOVERY_TIMEOUT):
+                aio_zeroconf = await AsyncZeroconf(ip_version=IPVersion.V4Only)
+                browser = await AsyncServiceBrowser(
+                    aio_zeroconf.zeroconf,
+                    ["_telnet._tcp.local."],
+                    handlers=[self.service_change_hander],
+                )
+                # await asyncio.sleep(5)
+                # browser.async_cancel()
+                # aio_zeroconf.async_close()
+                return "foo"
+        except TimeoutError:
+            _LOGGER.error("Timeout error in auto-discovery")
