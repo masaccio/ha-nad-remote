@@ -1,0 +1,27 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "NAD Amplifer remote control",
+        "description": "If you need help with the configuration have a look here: https://github.com/masaccio/nad2",
+        "data": {
+          "ipaddress": "IP Address",
+        }
+      }
+    },
+    "error": {
+      "auth": "Cannot connect to amplifier"
+    },
+  },
+  "options": {
+    "step": {
+      "user": {
+        "data": {
+          "binary_sensor": "Binary sensor enabled",
+          "sensor": "Sensor enabled",
+          "switch": "Switch enabled"
+        }
+      }
+    }
+  }
+}
