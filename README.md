@@ -1,8 +1,13 @@
-# NAD Amplier alternative integration for Home Assistant
+# NAD Amplier remote control for Home Assistant
 
-This repository contains a Home Assistant integration NAD Amplifiers. Much of this is a fork of the core integration amd this work may be merged back into core in the future depending ipon how it develops.
+This repository contains a Home Assistant integration NAD Amplifiers. Much of this is a fork of the core integration and this work may be merged back into core in the future depending upon how it develops. Goals for this custom integration are:
 
-_THE INTEGRATION SHOULD BE CONSIDERED NON-FUNCTIONAL UNTIL FURTHER NOTICE_
+* auto-discovery of telnet-capable NAD amplifiers (**DONE**)
+* zone 2 selection
+* switches for DSP programs
+* volume controls for all speakers
+
+**THE INTEGRATION SHOULD BE CONSIDERED NON-FUNCTIONAL UNTIL FURTHER NOTICE. PLEASE DO NOT RAISE ISSUES.**
 
 ##  Installation
 
