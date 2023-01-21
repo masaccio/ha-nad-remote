@@ -13,7 +13,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
 
 class NADSensor(NADEntity):
-    """nad2 Sensor class."""
+    """nad_remote Sensor class."""
 
     @property
     def name(self):

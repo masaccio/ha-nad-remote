@@ -2,16 +2,16 @@
 from unittest.mock import call
 from unittest.mock import patch
 
-from custom_components.nad2 import (
+from custom_components.nad_remote import (
     async_setup_entry,
 )
-from custom_components.nad2.const import (
+from custom_components.nad_remote.const import (
     DEFAULT_NAME,
 )
-from custom_components.nad2.const import (
+from custom_components.nad_remote.const import (
     DOMAIN,
 )
-from custom_components.nad2.const import (
+from custom_components.nad_remote.const import (
     SWITCH,
 )
 from homeassistant.components.switch import SERVICE_TURN_OFF
@@ -32,7 +32,7 @@ async def test_switch_services(hass):
     # Functions/objects can be patched directly in test code as well and can be used to test
     # additional things, like whether a function was called or what arguments it was called with
     with patch(
-        "custom_components.nad2.NADApiClient.async_set_title"
+        "custom_components.nad_remote.NADApiClient.async_set_title"
     ) as title_func:
         await hass.services.async_call(
             SWITCH,

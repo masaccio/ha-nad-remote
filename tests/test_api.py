@@ -2,7 +2,7 @@
 import asyncio
 
 import aiohttp
-from custom_components.nad2.api import (
+from custom_components.nad_remote.api import (
     NADApiClient,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession

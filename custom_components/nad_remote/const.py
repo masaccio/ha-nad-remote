@@ -1,12 +1,12 @@
 """Constants for NAD Amplifer remote control."""
 # Base component constants
 NAME = "NAD Amplifer remote control"
-DOMAIN = "nad2"
+DOMAIN = "nad_remote"
 DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.1.0"
 
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
-ISSUE_URL = "https://github.com/masaccio/nad2/issues"
+ISSUE_URL = "https://github.com/masaccio/nad_remote/issues"
 
 # Icons
 ICON = "mdi:format-quote-close"

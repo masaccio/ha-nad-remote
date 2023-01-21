@@ -1,18 +1,18 @@
 """Test NAD Amplifer remote control setup process."""
 import pytest
-from custom_components.nad2 import (
+from custom_components.nad_remote import (
     async_reload_entry,
 )
-from custom_components.nad2 import (
+from custom_components.nad_remote import (
     async_setup_entry,
 )
-from custom_components.nad2 import (
+from custom_components.nad_remote import (
     async_unload_entry,
 )
-from custom_components.nad2 import (
+from custom_components.nad_remote import (
     NADDataUpdateCoordinator,
 )
-from custom_components.nad2.const import (
+from custom_components.nad_remote.const import (
     DOMAIN,
 )
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -33,7 +33,7 @@ async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
 
     # Set up the entry and assert that the values set during setup are where we expect
     # them to be. Because we have patched the NADDataUpdateCoordinator.async_get_data
-    # call, no code from custom_components/nad2/api.py actually runs.
+    # call, no code from custom_components/nad_remote/api.py actually runs.
     assert await async_setup_entry(hass, config_entry)
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (

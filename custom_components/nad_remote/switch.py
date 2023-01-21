@@ -1,11 +1,12 @@
 """Switch platform for NAD Amplifer remote control."""
+import logging
+
 from homeassistant.components.switch import SwitchEntity
 
-from .const import DEFAULT_NAME
-from .const import DOMAIN
-from .const import ICON
-from .const import SWITCH
+from .const import DEFAULT_NAME, DOMAIN, ICON, SWITCH
 from .entity import NADEntity
+
+_LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
@@ -15,17 +16,19 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
 
 class NADBinarySwitch(NADEntity, SwitchEntity):
-    """nad2 switch class."""
+    """nad_remote switch class."""
 
     async def async_turn_on(self, **kwargs):  # pylint: disable=unused-argument
         """Turn on the switch."""
-        await self.coordinator.api.async_set_title("bar")
-        await self.coordinator.async_request_refresh()
+        _LOGGER.debug("switch on")
+        # await self.coordinator.api.async_set_title("bar")
+        # await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs):  # pylint: disable=unused-argument
         """Turn off the switch."""
-        await self.coordinator.api.async_set_title("foo")
-        await self.coordinator.async_request_refresh()
+        _LOGGER.debug("switch off")
+        # await self.coordinator.api.async_set_title("foo")
+        # await self.coordinator.async_request_refresh()
 
     @property
     def name(self):
@@ -40,4 +43,6 @@ class NADBinarySwitch(NADEntity, SwitchEntity):
     @property
     def is_on(self):
         """Return true if the switch is on."""
-        return self.coordinator.data.get("title", "") == "foo"
+        _LOGGER.debug("switch is_on")
+        return True
+        # return self.coordinator.data.get("title", "") == "foo"

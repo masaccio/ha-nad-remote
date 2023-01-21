@@ -1,0 +1,18 @@
+{
+  "domain": "nad_remote",
+  "name": "NAD Amplifer Remote",
+  "documentation": "https://github.com/masaccio/ha-nad-remote",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/masaccio/ha-nad-remote/issues",
+  "config_flow": true,
+  "version": "1.3.0",
+  "codeowners": [
+    "@masaccio"
+  ],
+  "requirements": [
+    "nad_receiver==0.3.0"
+  ],
+  "zeroconf": [
+    "_telnet._tcp.local."
+  ]
+}

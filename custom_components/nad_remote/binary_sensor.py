@@ -15,7 +15,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
 
 class NADBinarySensor(NADEntity, BinarySensorEntity):
-    """nad2 binary_sensor class."""
+    """nad_remote binary_sensor class."""
 
     @property
     def name(self):

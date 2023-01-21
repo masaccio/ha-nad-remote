@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "NAD Amplifer remote control",
+        "description": "If you need help with the configuration have a look here: https://github.com/masaccio/nad2",
+        "data": {
+          "host": "Hostname or IP address",
+          "name": "Amplifier name",
+          "port": "Port number"
+        }
+      },
+      "discovery_confirm": {
+        "description": "Do you want to set up {name}?",
+        "title": "NAD Amplifier discovery"
+      }
+    },
+    "error": {
+      "connection": "Telnet connection to NAD amplifier failed"
+    },
+    "abort": {
+      "discover_timeout": "Unable to discover any NAD amplifiers for telnet connection",
+      "unknown": "Unknown error occurred",
+      "cannot_connect": "Telnet connection to NAD amplifier failed",
+      "already_configured": "Amplifier is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "data": {
+          "binary_sensor": "Binary sensor enabled",
+          "sensor": "Sensor enabled",
+          "switch": "Switch enabled"
+        }
+      }
+    }
+  }
+}

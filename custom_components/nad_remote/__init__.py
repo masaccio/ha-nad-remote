@@ -2,28 +2,25 @@
 Custom integration to integrate NAD Amplifer remote control with Home Assistant.
 
 For more details about this integration, please refer to
-https://github.com/masaccio/nad2
+https://github.com/masaccio/nad_remote
 """
 import asyncio
 import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config
-from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.core import Config, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import NADApiClient
-from .const import CONF_IP_ADDRESS
-from .const import DOMAIN
-from .const import PLATFORMS
+from .const import DOMAIN, PLATFORMS
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+_LOGGER.debug("Init nad_remote")
 
 
 async def async_setup(hass: HomeAssistant, config: Config):
@@ -33,12 +30,12 @@ async def async_setup(hass: HomeAssistant, config: Config):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up this integration using UI."""
+    _LOGGER.debug("async_setup_entry: data=%s", entry.data)
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
 
-    ip_address = entry.data.get(CONF_IP_ADDRESS)
-    api = NADApiClient(ip_address)
-
+    _LOGGER.debug("Setup entry host=%s, port=%s", entry.data[CONF_HOST], entry.data[CONF_PORT])
+    api = NADApiClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
     coordinator = NADDataUpdateCoordinator(hass, client=api)
     await coordinator.async_refresh()
 
@@ -50,9 +47,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     for platform in PLATFORMS:
         if entry.options.get(platform, True):
             coordinator.platforms.append(platform)
-            hass.async_add_job(
-                hass.config_entries.async_forward_entry_setup(entry, platform)
-            )
+            hass.async_add_job(hass.config_entries.async_forward_entry_setup(entry, platform))
 
     entry.add_update_listener(async_reload_entry)
     return True
@@ -74,8 +69,11 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Update data via library."""
+        _LOGGER.debug("Update data from API")
         try:
-            return await self.api.async_get_data()
+            self.capabilities = await self.api.async_get_capabilities()
+            _LOGGER.debug("Got capabilities: %s", self.capabilities)
+            return True
         except Exception as exception:
             raise UpdateFailed() from exception
 
