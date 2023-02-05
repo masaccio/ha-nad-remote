@@ -2,6 +2,7 @@ from nad_receiver.nad_transport import NadTransport
 import re
 from typing import Callable, Optional
 
+
 class Fake_NAD_C_356BE_Transport(NadTransport):
     """A fake NAD C 356BE device.
 
@@ -45,7 +46,9 @@ class Fake_NAD_C_356BE_Transport(NadTransport):
         operator = match.group("operator")
         value = match.group("value")
 
-        response: Callable[[Optional[str]], str] = lambda val: f"{component}.{function}{'=' + val if val else ''}"
+        response: Callable[
+            [Optional[str]], str
+        ] = lambda val: f"{component}.{function}{'=' + val if val else ''}"
 
         if function == "Version" and operator == "?":
             return response(self._version)
