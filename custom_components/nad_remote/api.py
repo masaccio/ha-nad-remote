@@ -3,12 +3,14 @@ import logging
 import re
 import sys
 
+from typing import Tuple
+
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 sys.path = ["/config/custom_components/nad_remote"] + sys.path
 
 # Use local implementation of NAD client rather than upstream
 from .nad_receiver import NADReceiverTelnet
-from .const import DOMAIN
+from .const import DOMAIN, DEFAULT_MAX_VOLUME, DEFAULT_MIN_VOLUME, MAIN_NAME, ZONE2_NAME
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -61,9 +63,9 @@ class NADApiClient:
                         sources[source_id] = self.capabilities[s_name]
                         source_list.append(self.capabilities[s_name])
             _LOGGER.debug("Sources discovered: %s", ",".join(source_list))
-        except Exception as exception:
-            _LOGGER.debug("Error fetching capabilities: %s", exception)
-            raise UpdateFailed() from exception
+        except Exception as e:
+            _LOGGER.debug("Error fetching capabilities: %s", e)
+            raise UpdateFailed() from e
         return sources
 
     @property
@@ -73,3 +75,16 @@ class NADApiClient:
             return True
         except ValueError:
             return False
+
+    # def volume_range(self, zone: str) -> tuple(int, int):
+    #     try:
+    #         capabilities = self.get_capabilities()
+    #         if zone == ZONE2_NAME:
+    #             min_vol = self.capabilities.get("zone2_volume_min", DEFAULT_MIN_VOLUME)
+    #             max_vol = self.capabilities.get("zone2_volume_max", DEFAULT_MAX_VOLUME)
+    #         else:
+    #             min_vol = self.capabilities.get("main_volume_min", DEFAULT_MIN_VOLUME)
+    #             max_vol = self.capabilities.get("main_volume_max", DEFAULT_MAX_VOLUME)
+    #     except Exception as e:
+    #         _LOGGER.debug("Error fetching capabilities: %s", e)
+    #         raise UpdateFailed() from e
