@@ -3,16 +3,16 @@ import logging
 
 from homeassistant.components.switch import SwitchEntity
 
-from .const import DEFAULT_NAME, DOMAIN, ICON, SWITCH
+from .const import DOMAIN
 from .entity import NADEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
-    """Setup sensor platform."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_devices([NADBinarySwitch(coordinator, entry)])
+async def async_setup_entry(hass, config_entry, async_add_devices):
+    """Setup Switch platform."""
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_devices([NADBinarySwitch(coordinator, config_entry)])
 
 
 class NADBinarySwitch(NADEntity, SwitchEntity):
@@ -33,12 +33,12 @@ class NADBinarySwitch(NADEntity, SwitchEntity):
     @property
     def name(self):
         """Return the name of the switch."""
-        return f"{DEFAULT_NAME}_{SWITCH}"
+        return f"{DOMAIN}_test"
 
-    @property
-    def icon(self):
-        """Return the icon of this switch."""
-        return ICON
+    # @property
+    # def icon(self):
+    #     """Return the icon of this switch."""
+    #     return ICON
 
     @property
     def is_on(self):

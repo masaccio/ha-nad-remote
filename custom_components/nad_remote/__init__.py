@@ -9,18 +9,17 @@ import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, Platform
 from homeassistant.core import Config, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import NADApiClient
-from .const import DOMAIN, PLATFORMS
-
-SCAN_INTERVAL = timedelta(seconds=30)
+from .const import DOMAIN, SCAN_INTERVAL
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
-_LOGGER.debug("Init nad_remote")
+
+PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.MEDIA_PLAYER]
 
 
 async def async_setup(hass: HomeAssistant, config: Config):
@@ -30,12 +29,13 @@ async def async_setup(hass: HomeAssistant, config: Config):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up this integration using UI."""
-    _LOGGER.debug("async_setup_entry: data=%s", entry.data)
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
 
-    _LOGGER.debug("Setup entry host=%s, port=%s", entry.data[CONF_HOST], entry.data[CONF_PORT])
-    api = NADApiClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
+    try:
+        api = NADApiClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
+    except Exception as e:
+        _LOGGER.error("NAD API initialisation failed: %s", e)
     coordinator = NADDataUpdateCoordinator(hass, client=api)
     await coordinator.async_refresh()
 
@@ -64,18 +64,16 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize."""
         self.api = client
         self.platforms = []
-
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
     async def _async_update_data(self):
         """Update data via library."""
-        _LOGGER.debug("Update data from API")
         try:
-            self.capabilities = await self.api.async_get_capabilities()
-            _LOGGER.debug("Got capabilities: %s", self.capabilities)
+            self.capabilities = self.api.get_capabilities()
             return True
-        except Exception as exception:
-            raise UpdateFailed() from exception
+        except Exception as e:
+            _LOGGER.error("Error fetching capabilities: %s", e)
+            raise UpdateFailed() from e
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
