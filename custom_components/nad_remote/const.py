@@ -1,4 +1,7 @@
 """Constants for NAD Amplifer remote control."""
+
+from datetime import timedelta
+
 # Base component constants
 NAME = "NAD Amplifer remote control"
 DOMAIN = "nad_remote"
@@ -8,22 +11,7 @@ VERSION = "0.1.0"
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
 ISSUE_URL = "https://github.com/masaccio/nad_remote/issues"
 
-# Icons
-ICON = "mdi:format-quote-close"
+SCAN_INTERVAL = timedelta(seconds=30)
 
-# Device classes
-BINARY_SENSOR_DEVICE_CLASS = "connectivity"
-
-# Platforms
-BINARY_SENSOR = "binary_sensor"
-SENSOR = "sensor"
-SWITCH = "switch"
-PLATFORMS = [SWITCH]
-
-
-# Configuration and options
-CONF_ENABLED = "enabled"
-CONF_IP_ADDRESS = "ip_address"
-
-# Defaults
-DEFAULT_NAME = DOMAIN
+CONF_MIN_VOLUME = "min_volume"
+CONF_MAX_VOLUME = "max_volume"
