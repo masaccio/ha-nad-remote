@@ -156,7 +156,7 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Return true if host is a NAD amplifier"""
         try:
             api = NADApiClient(host, port)
-            model = await api.get_model()
+            model = api.get_model()
             if model is not None:
                 _LOGGER.debug("Amplifier model=%s", model)
                 return True
