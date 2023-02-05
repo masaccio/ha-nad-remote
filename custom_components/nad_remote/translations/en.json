@@ -16,7 +16,7 @@
       }
     },
     "error": {
-      "connection": "Telnet connection to NAD amplifier failed"
+      "cannot_connect": "Telnet connection to NAD amplifier failed"
     },
     "abort": {
       "discover_timeout": "Unable to discover any NAD amplifiers for telnet connection",

@@ -3,7 +3,6 @@ import logging
 import re
 import socket
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
@@ -55,7 +54,7 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     def _discovered_hostname(self, discovery_info: DiscoveryInfoType) -> str:
-        """return the hostname or IP address of the discovered device"""
+        """Return the hostname or IP address of the discovered device"""
         hostname = discovery_info.hostname[:-1]
         try:
             socket.gethostbyname(hostname)
@@ -64,28 +63,28 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             # Fallback on IP address
             return discovery_info.addresses[0]
 
+    def _discovered_service_name(self, discovery_info: DiscoveryInfoType) -> str:
+        """Return the name of the discovered device"""
+        if "." in discovery_info.name:
+            return discovery_info.name.split(".")[0]
+        else:
+            return discovery_info.name
+
     async def async_step_zeroconf(self, discovery_info: DiscoveryInfoType):
         """Handle zeroconf discovery."""
-        _LOGGER.debug("Initiating zeroconf discovery")
         if discovery_info is None:
             return self.async_abort(reason="cannot_connect")
 
         self._host = self._discovered_hostname(discovery_info)
+        self._name = self._discovered_service_name(discovery_info)
         self._port = discovery_info.port
-        self._name = re.sub(r"[.]_telnet.*", "", discovery_info.name)
+        self._unique_id = format_mac(discovery_info.addresses[-1])
 
         # Abort if this device has already been configured
         self._async_abort_entries_match({CONF_HOST: self._host})
 
-        _LOGGER.debug("Zeroconf: addresses=%s", discovery_info.addresses)
-        if len(discovery_info.addresses) < 2:
-            _LOGGER.error("No MAC address found: addresses=%s", discovery_info.addresses)
-            self._unique_id = None
-        else:
-            self._unique_id = format_mac(discovery_info.addresses[1])
-
         _LOGGER.debug(
-            "Zeroconf discovery info: host=%s, port=%s, name=%s, unique_id=%s",
+            "Discovered device: host=%s, port=%s, name=%s, unique_id=%s",
             self._host,
             self._port,
             self._name,
@@ -96,21 +95,18 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_discovery_confirm()
 
-    async def async_step_discovery_confirm(self, user_input=None):
+    async def async_step_discovery_confirm(self):
         """Handle user-confirmation of discovered node."""
-        _LOGGER.debug("Confirming discovery user_input=%s", user_input)
-        if user_input is not None:
-            try:
-                _LOGGER.debug("Confirming discovery information")
-                valid = await self._async_check_connection(self._host, self._port)
-                if valid:
-                    _LOGGER.debug("Successful connection to %s", self._name)
-                    return self._async_get_entry()
-                else:
-                    return self.async_abort(reason="cannot_connect")
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception checking NAD connection")
-                self._errors["base"] = "unknown"
+        try:
+            valid = await self._async_check_connection(self._host, self._port)
+            if valid:
+                _LOGGER.debug("Successful connection to '%s'", self._name)
+                return self._async_get_entry()
+            else:
+                return self.async_abort(reason="cannot_connect")
+        except Exception as e:  # pylint: disable=broad-except
+            _LOGGER.error("Error checking amplifier model for host %s: %s", self._host, e)
+            self._errors["base"] = "unknown"
 
         return self.async_show_form(
             step_id="discovery_confirm", description_placeholders={"name": self._name}, errors={}
@@ -119,31 +115,24 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         errors = {}
-        _LOGGER.debug("User step started: user_input=%s", user_input)
-
         if user_input is not None:
             self._host = user_input[CONF_HOST]
             self._port = user_input[CONF_PORT]
             self._name = user_input[CONF_NAME]
-            _LOGGER.debug("User step testing connection: host=%s", self._host)
             valid = await self._async_check_connection(self._host, self._port)
             if valid:
                 _LOGGER.debug("Successful connection to %s", self._name)
                 return self.async_create_entry(title=user_input[CONF_HOST], data=user_input)
             else:
-                self._errors["base"] = "connection"
-
-        # if not errors:
-        #     await self._set_uid_and_abort()
-        #     return self._async_get_entry()
+                errors["base"] = "cannot_connect"
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_NAME): cv.string,
-                    vol.Required(CONF_HOST): cv.string,
-                    vol.Required(CONF_PORT, default=23): cv.positive_int,
+                    vol.Required(CONF_NAME, default=self._name): str,
+                    vol.Required(CONF_HOST, default=self._host): str,
+                    vol.Required(CONF_PORT, default=self._port): int,
                 }
             ),
             errors=errors,
@@ -164,16 +153,15 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def _async_check_connection(self, host: str, port: int):
-        """Return true if credentials is valid."""
+        """Return true if host is a NAD amplifier"""
         try:
-            _LOGGER.debug("Checking connection to amplifier: host=%s port=%s", host, port)
             api = NADApiClient(host, port)
-            model = await api.async_get_model()
+            model = await api.get_model()
             if model is not None:
                 _LOGGER.debug("Amplifier model=%s", model)
                 return True
             else:
-                _LOGGER.error("Amplifier model not supported")
+                _LOGGER.warning("'%s' is not a NAD amplifier", host)
                 return False
         except Exception as e:  # pylint: disable=broad-except
             _LOGGER.warning("Connection check failed: %s", e)
