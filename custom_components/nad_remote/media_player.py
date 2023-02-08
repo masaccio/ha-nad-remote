@@ -56,11 +56,7 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         self.coordinator = coordinator
         self.config_entry = config_entry
         self.zone = zone
-        self._update_success = True
         super().__init__(coordinator, config_entry)
-
-        self._source_dict = coordinator.api.get_sources()
-        self._reverse_mapping = {value: key for key, value in self._source_dict.items()}
 
     @property
     def name(self):
@@ -71,94 +67,56 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         """Return a unique ID to use for this entity."""
         return self.config_entry.data.get("name") + " [" + self.zone + "]"
 
-    def __getattr__(self, attr):
-        if self.zone == MAIN_NAME:
-            _LOGGER.debug("main zone undefined funxtion attr=%s", attr)
-        raise AttributeError()
-
     @property
     def state(self):
-        if self.zone == ZONE2_NAME:
-            status = self.coordinator.api.receiver.zone2_power("?")
-        else:
-            status = self.coordinator.api.receiver.main_power("?")
-        if status == "On":
-            _LOGGER.debug("ON: state: zone=%s, status=%s", self.zone, status)
-            return STATE_ON
-        elif status == "Off":
-            _LOGGER.debug("OFF: state: zone=%s, status=%s", self.zone, status)
-            return STATE_OFF
-        else:
-            _LOGGER.debug("UNKNOWN: state: zone=%s, status=%s", self.zone, status)
-            return STATE_UNKNOWN
+        return self.coordinator.api.get_power_state(self.zone)
 
     def update(self) -> None:
-        _LOGGER.debug("update zone=%s", self.zone)
+        pass
+
+    @property
+    def source_list(self) -> list[str] | None:
+        """Get a list of available sources for the receiver"""
+        return self.coordinator.api.get_sources()
 
     @property
     def source(self) -> str | None:
-        try:
-            if self.zone == ZONE2_NAME:
-                source = self.coordinator.api.receiver.zone2_source("?")
-            else:
-                source = self.coordinator.api.receiver.main_source("?")
-            _LOGGER("Source=%s '%s'", source, self._reverse_mapping[source])
-            return self._reverse_mapping[source]
-        except Exception as e:
-            _LOGGER.debug("source: error: %s", e)
+        """Get the zone's current source"""
+        return self.coordinator.api.get_source(self.zone)
 
     def select_source(self, source: str) -> None:
-        _LOGGER("Set source=%s '%s'", source, self._source_dict[source])
-        if self.zone == ZONE2_NAME:
-            source = self.coordinator.api.receiver.zone2_source("=", self._source_dict[source])
-        else:
-            source = self.coordinator.api.receiver.main_source("=", self._source_dict[source])
+        """Select a source in the receiver"""
+        self.coordinator.api.set_source(self.zone, source)
 
     def turn_off(self) -> None:
-        """Turn the media player off."""
-        self.coordinator.api.receiver.main_power("=", "Off")
+        """Turn the receiver zone off."""
+        self.coordinator.api.power(self.zone, STATE_OFF)
 
     def turn_on(self) -> None:
-        """Turn the media player on."""
-        self.coordinator.api.receiver.main_power("=", "On")
+        """Turn the receiver zone on."""
+        self.coordinator.api.power(self.zone, STATE_ON)
 
     @property
     def volume_level(self) -> float | None:
-        try:
-            if self.zone == ZONE2_NAME:
-                status = self.coordinator.api.receiver.zone2_volume("?")
-            else:
-                status = self.coordinator.api.receiver.main_volume("?")
-            _LOGGER.debug("volume_level: zone=%s, volume=%s", self.zone, status)
-            return float(status)
-        except Exception as e:
-            _LOGGER.debug("volume_level: error: %s", e)
+        volume = self.coordinator.api.get_volume_level(self.zone)
+
+    def set_volume_level(self, volume: float) -> None:
+        self.coordinator.api.set_volume_level(self.zone, volume)
 
     @property
     def is_volume_muted(self) -> bool | None:
-        try:
-            if self.zone == ZONE2_NAME:
-                status = self.coordinator.api.receiver.zone2_mute("?")
-            else:
-                status = self.coordinator.api.receiver.main_mute("?")
-            _LOGGER.debug("is_volume_muted: zone=%s, mute=%s", self.zone, status)
-            if status == "Off":
-                return False
-            else:
-                return True
-        except Exception as e:
-            _LOGGER.debug("is_volume_muted: error: %s", e)
+        return self.coordinator.api.muted(self.zone)
 
     def volume_up(self) -> None:
         """Volume up the media player."""
         if self.zone == ZONE2_NAME:
-            self.coordinator.api.receiver.zone2_volume("+")
+            self.coordinator.api._receiver.zone2_volume("+")
         else:
-            self.coordinator.api.receiver.main_volume("-")
+            self.coordinator.api._receiver.main_volume("-")
 
     def volume_down(self) -> None:
         """Volume down the media player."""
         if self.zone == ZONE2_NAME:
-            self.coordinator.api.receiver.zone2_volume("-")
+            self.coordinator.api._receiver.zone2_volume("-")
         else:
-            self.coordinator.api.receiver.main_volume("-")
+            self.coordinator.api._receiver.main_volume("-")
