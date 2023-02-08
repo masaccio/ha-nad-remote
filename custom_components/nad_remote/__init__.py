@@ -35,7 +35,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     try:
         api = NADApiClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
     except Exception as e:
-        _LOGGER.error("NAD API initialisation failed: %s", e)
+        raise ConfigEntryNotReady(f"NAD API initialisation failed: {e}") from e
+
     coordinator = NADDataUpdateCoordinator(hass, client=api)
     await coordinator.async_refresh()
 
