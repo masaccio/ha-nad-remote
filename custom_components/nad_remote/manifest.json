@@ -9,9 +9,6 @@
   "codeowners": [
     "@masaccio"
   ],
-  "requirements": [
-    "nad_receiver==0.3.0"
-  ],
   "zeroconf": [
     "_telnet._tcp.local."
   ]
