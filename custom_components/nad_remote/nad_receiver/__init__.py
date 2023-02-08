@@ -9,8 +9,8 @@ import codecs
 import socket
 from time import sleep
 from typing import Any, Dict, Iterable, Optional, Union, List
-from nad_receiver.nad_commands import CMDS
-from nad_receiver.nad_transport import (
+from .nad_commands import CMDS
+from .nad_transport import (
     NadTransport,
     SerialPortTransport,
     TelnetTransportWrapper,
@@ -116,10 +116,13 @@ class NADReceiver:
 
         Returns float
         """
+        return self._volume("main", operator, value)
+
+    def _volume(self, domain: str, operator: str, value: str) -> Optional[float]:
         if value is not None:
-            volume = self.exec_command("main", "volume", operator, str(value))
+            volume = self.exec_command(domain, "volume", operator, str(value))
         else:
-            volume = self.exec_command("main", "volume", operator)
+            volume = self.exec_command(domain, "volume", operator)
 
         if volume is None:
             return None
@@ -240,6 +243,10 @@ class NADReceiver:
         if not self._has_zone2():
             raise ValueError("Zone2 unavilable")
         return self.exec_command("zone2", "power", operator, value)
+
+    def zone2_mute(self, operator: str, value: Optional[str] = None) -> Optional[str]:
+        """Execute Zone2.Mute."""
+        return self.exec_command("zone2", "mute", operator, value)
 
     def zone2_volume(self, operator: str, value: Optional[str] = None) -> Optional[float]:
         """

@@ -1,4 +1,4 @@
-from nad_receiver.nad_transport import NadTransport
+from .nad_transport import NadTransport
 import re
 from typing import Callable, Optional
 
