@@ -61,7 +61,7 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return self.config_entry.data.get("name") + "(" + self.zone + ")"
+        return self.config_entry.data.get("name") + " (" + self.zone + ")"
 
     @property
     def name(self):
@@ -94,6 +94,7 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         self.coordinator.api.power(self.zone, STATE_ON)
 
     def toggle(self) -> None:
+        """Toggle the power on the receiver"""
         state = self.coordinator.api.get_power_state(self.zone)
         if state == STATE_OFF:
             self.turn_on()
@@ -102,7 +103,7 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
 
     @property
     def volume_level(self) -> float | None:
-        volume = self.coordinator.api.get_volume_level(self.zone)
+        return self.coordinator.api.get_volume_level(self.zone)
 
     def set_volume_level(self, volume: float) -> None:
         self.coordinator.api.set_volume_level(self.zone, volume)

@@ -24,16 +24,5 @@
       "cannot_connect": "Telnet connection to NAD amplifier failed",
       "already_configured": "Amplifier is already configured"
     }
-  },
-  "options": {
-    "step": {
-      "user": {
-        "data": {
-          "binary_sensor": "Binary sensor enabled",
-          "sensor": "Sensor enabled",
-          "switch": "Switch enabled"
-        }
-      }
-    }
   }
 }

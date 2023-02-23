@@ -20,7 +20,7 @@ from .const import DOMAIN, SCAN_INTERVAL
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.MEDIA_PLAYER]
+PLATFORMS: list[Platform] = [Platform.MEDIA_PLAYER]
 
 
 async def async_setup(hass: HomeAssistant, config: Config):
