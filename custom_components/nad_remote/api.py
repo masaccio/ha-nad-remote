@@ -68,34 +68,20 @@ class NADApiClient:
                         else:
                             self._sources[source_id] = self._capabilities[s_name]
             except Exception as e:
-                _LOGGER.debug("Error fetching capabilities: %s", e)
+                _LOGGER.error("Error fetching capabilities: %s", e)
 
         source_list = [v for k, v in self._sources.items() if v is not None]
-        _LOGGER.debug("Sources discovered: %s", source_list)
+        _LOGGER.debug("get_sources sources=%s", source_list)
         return source_list
 
     def volume_to_ha(self, zone: str, volume: float) -> float:
         volume_range = self._volume_range[zone][1] - self._volume_range[zone][0]
         volume_min = self._volume_range[zone][0]
-        _LOGGER.debug(
-            "volume_to_ha: volume=%s, range=%s, min=%s, value=%s",
-            volume,
-            volume_range,
-            volume_min,
-            abs(volume - volume_min) / volume_range,
-        )
         return abs(volume - volume_min) / volume_range
 
     def volume_from_ha(self, zone: str, volume: float) -> float:
         volume_range = self._volume_range[zone][1] - self._volume_range[zone][0]
         volume_min = self._volume_range[zone][0]
-        _LOGGER.debug(
-            "volume_from_ha: volume=%s, range=%s, min=%s, value=%s",
-            volume,
-            volume_range,
-            volume_min,
-            volume * volume_range - volume_min,
-        )
         return volume * volume_range - volume_min
 
     @property
@@ -118,7 +104,7 @@ class NADApiClient:
             _LOGGER.debug("OFF: state: zone=%s, status=%s", zone, status)
             return STATE_OFF
         else:
-            _LOGGER.debug("UNKNOWN: state: zone=%s, status=%s", zone, status)
+            _LOGGER.warning("UNKNOWN: state: zone=%s, status=%s", zone, status)
             return STATE_UNKNOWN
 
     def get_source(self, zone: str) -> str | None:
@@ -128,35 +114,41 @@ class NADApiClient:
             else:
                 source = self._receiver.main_source("?")
             if source is not None and source in self._sources:
-                _LOGGER.debug("zone '%s' source='%s'", zone, self._sources[source])
+                _LOGGER.debug("get_source: zone='%s' source='%s'", zone, self._sources[source])
                 return self._sources[source]
             else:
-                _LOGGER.error("zone '%s' unknown source '%s'", zone, source)
+                _LOGGER.error("get_source: zone='%s', unknown source '%s'", zone, source)
         except Exception as e:
-            _LOGGER.debug("source: error: %s", e)
+            _LOGGER.error("source: error: %s", e)
 
     def set_source(self, zone: str, source: str) -> None:
-        if source is None or source not in self._source_name_to_id:
-            _LOGGER.error("zone '%s' unknown source in selected '%s'", zone, source)
-            return None
-        _LOGGER.debug("zone '%s' set source='%s'", zone, source)
-        if zone == ZONE2_NAME:
-            source = self._receiver.zone2_source("=", self._source_name_to_id[source])
-        else:
-            source = self._receiver.main_source("=", self._source_name_to_id[source])
+        try:
+            if source is None or source not in self._source_name_to_id:
+                _LOGGER.error("zone '%s' unknown source in selected '%s'", zone, source)
+                return None
+            _LOGGER.debug("set_source: zone='%s' source='%s'", zone, source)
+            if zone == ZONE2_NAME:
+                source = self._receiver.zone2_source("=", self._source_name_to_id[source])
+            else:
+                source = self._receiver.main_source("=", self._source_name_to_id[source])
+        except Exception as e:
+            _LOGGER.error("power: error: %s", e)
 
     def power(self, zone: str, state: str) -> None:
-        _LOGGER.debug("power: zone=%s, state=%s", zone, state)
-        if zone == ZONE2_NAME:
-            if state == STATE_ON:
-                self._receiver.zone2_power("=", "On")
+        try:
+            _LOGGER.debug("power: zone=%s, state=%s", zone, state)
+            if zone == ZONE2_NAME:
+                if state == STATE_ON:
+                    self._receiver.zone2_power("=", "On")
+                else:
+                    self._receiver.zone2_power("=", "Off")
             else:
-                self._receiver.zone2_power("=", "Off")
-        else:
-            if state == STATE_ON:
-                self._receiver.main_power("=", "On")
-            else:
-                self._receiver.main_power("=", "Off")
+                if state == STATE_ON:
+                    self._receiver.main_power("=", "On")
+                else:
+                    self._receiver.main_power("=", "Off")
+        except Exception as e:
+            _LOGGER.error("power: error: %s", e)
 
     def get_volume_level(self, zone: str) -> float:
         try:
@@ -165,9 +157,9 @@ class NADApiClient:
             else:
                 status = self._receiver.main_volume("?")
             volume = self.volume_to_ha(zone, float(status))
-            _LOGGER.debug("get_volume_level: zone=%s, status=%s, volume=%s", zone, status, volume)
+            _LOGGER.debug("get_volume_level: zone=%s, dB=%s, ha-volume=%s", zone, status, volume)
         except Exception as e:
-            _LOGGER.debug("get_volume_level: error: %s", e)
+            _LOGGER.error("get_volume_level: error: %s", e)
 
     def set_volume_level(self, zone: str, volume: float) -> None:
         try:
@@ -175,9 +167,9 @@ class NADApiClient:
                 status = self._receiver.zone2_volume("=", self.volume_from_ha(zone, volume))
             else:
                 status = self._receiver.main_volume("=", self.volume_from_ha(zone, volume))
-            _LOGGER.debug("set_volume_level: zone=%s, status=%s, volume=%s", zone, status, volume)
+            _LOGGER.debug("set_volume_level: zone=%s, dB=%s, ha-volume=%s", zone, status, volume)
         except Exception as e:
-            _LOGGER.debug("set_volume_level: error: %s", e)
+            _LOGGER.error("set_volume_level: error: %s", e)
 
     def muted(self, zone: str) -> bool:
         try:
@@ -191,7 +183,17 @@ class NADApiClient:
             else:
                 return True
         except Exception as e:
-            _LOGGER.debug("is_volume_muted: error: %s", e)
+            _LOGGER.error("is_volume_muted: error: %s", e)
+
+    def mute(self, zone: str, mute: bool) -> bool:
+        try:
+            if zone == ZONE2_NAME:
+                status = self._receiver.zone2_mute("=", "On" if mute else "Off")
+            else:
+                status = self._receiver.main_mute("=", "On" if mute else "Off")
+            _LOGGER.debug("mute: zone=%s, mute=%s", zone, mute)
+        except Exception as e:
+            _LOGGER.error("mute: error: %s", e)
 
     def volume_range(self, zone: str) -> Tuple[int, int]:
         try:
@@ -205,5 +207,5 @@ class NADApiClient:
             _LOGGER.debug("volume_range: min=%s, max=%s", min_vol, max_vol)
             return (float(min_vol), float(max_vol))
         except Exception as e:
-            _LOGGER.debug("Error fetching capabilities: %s", e)
+            _LOGGER.error("Error fetching capabilities: %s", e)
             raise UpdateFailed() from e
