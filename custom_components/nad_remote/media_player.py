@@ -56,14 +56,12 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         self.coordinator = coordinator
         self.config_entry = config_entry
         self.zone = zone
-        # self._attr_name = config_entry.data.get(CONF_NAME)
-        # self._attr_has_entity_name = True
         super().__init__(coordinator, config_entry)
 
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return self.config_entry.data.get("name") + " [" + self.zone + "]"
+        return self.config_entry.data.get("name") + "(" + self.zone + ")"
 
     @property
     def name(self):
@@ -136,6 +134,3 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
 
     def select_sound_mode(self, sound_mode: str) -> None:
         self.coordinator.api.set_listening_mode(self.zone, sound_mode)
-
-    def __getattr__(self, attr):
-        _LOGGER.debug("undefined attribute '%s'", attr)
