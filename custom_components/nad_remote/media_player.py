@@ -31,7 +31,7 @@ async def async_setup_entry(
         zones = [MAIN_NAME, ZONE2_NAME]
     else:
         zones = [MAIN_NAME]
-    _LOGGER.debug("NAD media player zones: %s", ",".join(zones))
+    _LOGGER.debug("NAD media player zones: %s", ", ".join(zones))
     entities = [NADPlayer(zone, coordinator, config_entry) for zone in zones]
     async_add_entities(entities)
 
