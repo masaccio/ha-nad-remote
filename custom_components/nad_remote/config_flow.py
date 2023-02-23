@@ -77,11 +77,13 @@ class NADFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._host = self._discovered_hostname(discovery_info)
         self._name = self._discovered_service_name(discovery_info)
+        # Remove hex id, for example 'NAD T758 (826F3D40)'
+        self._name = re.sub(r"\s+\(\w+\)", "", self._name)
         self._port = discovery_info.port
         self._unique_id = format_mac(discovery_info.addresses[-1])
 
         # Abort if this device has already been configured
-        self._async_abort_entries_match({CONF_HOST: self._host})
+        self._async_abort_entries_match({CONF_HOST: self._host, CONF_NAME: self._name})
 
         _LOGGER.debug(
             "Discovered device: host=%s, port=%s, name=%s, unique_id=%s",
