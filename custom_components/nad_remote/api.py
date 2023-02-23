@@ -4,6 +4,8 @@ import re
 import sys
 from typing import Tuple
 
+import pysnooper
+
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNKNOWN
@@ -15,6 +17,7 @@ from .const import DEFAULT_MAX_VOLUME, DEFAULT_MIN_VOLUME, DOMAIN, MAIN_NAME, ZO
 from .nad_receiver import NADReceiverTelnet
 
 
+@pysnooper.snoop()
 class NADApiClient:
     def __init__(self, host: str, port: int) -> None:
         """NAD API Client."""
