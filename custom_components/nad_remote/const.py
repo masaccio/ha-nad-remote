@@ -21,3 +21,17 @@ DEFAULT_MAX_VOLUME = -20
 
 ZONE2_NAME = "Zone2"
 MAIN_NAME = "Main"
+
+LISTENING_MODES = [
+    "None",
+    "ProLogic",
+    "SurroundEX",
+    "PLIIMovie",
+    "PLIIMusic",
+    "NEO6Cinema",
+    "EARS",
+    "EnhancedStereo",
+    "StereoDownmix",
+    "AnalogBypass",
+    "NEO6Music",
+]

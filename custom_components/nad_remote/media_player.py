@@ -40,7 +40,7 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
     """NAD Receiver Entity"""
 
     _attr_icon = "mdi:speaker-multiple"
-    # _attr_device_class = MediaPlayerDeviceClass.RECEIVER
+    _attr_device_class = MediaPlayerDeviceClass.RECEIVER
     _attr_supported_features: MediaPlayerEntityFeature = (
         MediaPlayerEntityFeature.VOLUME_SET
         | MediaPlayerEntityFeature.VOLUME_MUTE
@@ -48,7 +48,7 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         | MediaPlayerEntityFeature.TURN_ON
         | MediaPlayerEntityFeature.TURN_OFF
         | MediaPlayerEntityFeature.SELECT_SOURCE
-        # | MediaPlayerEntityFeature.SELECT_SOUND_MODE
+        | MediaPlayerEntityFeature.SELECT_SOUND_MODE
     )
 
     def __init__(self, zone: str, coordinator: DataUpdateCoordinator, config_entry: ConfigEntry):
@@ -61,24 +61,16 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         super().__init__(coordinator, config_entry)
 
     @property
-    def name(self):
-        return self.unique_id
-
-    @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
         return self.config_entry.data.get("name") + " [" + self.zone + "]"
 
-    # def __getattribute__(self, attr):
-    #     _LOGGER.debug("attr='%s'", attr)
-    #     return super(NADPlayer, self).__getattribute__(attr)
-
-    # @property
-    # def state(self):
-    #     return self.coordinator.api.get_power_state(self.zone)
+    @property
+    def name(self):
+        return self.unique_id
 
     def update(self) -> None:
-        self._attr_state = self.api.get_power_state(self.zone)
+        self._attr_state = self.coordinator.api.get_power_state(self.zone)
         self._attr_source = self.coordinator.api.get_source(self.zone)
 
     @property
@@ -102,6 +94,13 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
     def turn_on(self) -> None:
         """Turn the receiver zone on."""
         self.coordinator.api.power(self.zone, STATE_ON)
+
+    def toggle(self) -> None:
+        state = self.coordinator.api.get_power_state(self.zone)
+        if state == STATE_OFF:
+            self.turn_on()
+        else:
+            self.turn_off()
 
     @property
     def volume_level(self) -> float | None:
@@ -130,6 +129,13 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
             self.coordinator.api._receiver.zone2_volume("-")
         else:
             self.coordinator.api._receiver.main_volume("-")
+
+    @property
+    def sound_mode(self) -> str | None:
+        return self.coordinator.api.get_listening_mode(self.zone)
+
+    def select_sound_mode(self, sound_mode: str) -> None:
+        self.coordinator.api.set_listening_mode(self.zone, sound_mode)
 
     def __getattr__(self, attr):
         _LOGGER.debug("undefined attribute '%s'", attr)

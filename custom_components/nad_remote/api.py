@@ -4,20 +4,24 @@ import re
 import sys
 from typing import Tuple
 
-import pysnooper
-
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNKNOWN
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_MAX_VOLUME, DEFAULT_MIN_VOLUME, DOMAIN, MAIN_NAME, ZONE2_NAME
+from .const import (
+    DEFAULT_MAX_VOLUME,
+    DEFAULT_MIN_VOLUME,
+    DOMAIN,
+    MAIN_NAME,
+    ZONE2_NAME,
+    LISTENING_MODES,
+)
 
 # Use local implementation of NAD client rather than upstream
 from .nad_receiver import NADReceiverTelnet
 
 
-@pysnooper.snoop()
 class NADApiClient:
     def __init__(self, host: str, port: int) -> None:
         """NAD API Client."""
@@ -27,6 +31,7 @@ class NADApiClient:
         self._capabilities = self.get_capabilities()
         _ = self.get_sources()
         self._source_name_to_id = {v: k for k, v in self._sources.items()}
+        self._listening_modes = LISTENING_MODES
         self._volume_range = {}
         self._volume_range[MAIN_NAME] = self.volume_range(MAIN_NAME)
         if self.has_zone2:
@@ -122,20 +127,51 @@ class NADApiClient:
             else:
                 _LOGGER.error("get_source: zone='%s', unknown source '%s'", zone, source)
         except Exception as e:
-            _LOGGER.error("source: error: %s", e)
+            _LOGGER.error("get_source: error: %s", e)
 
     def set_source(self, zone: str, source: str) -> None:
         try:
             if source is None or source not in self._source_name_to_id:
-                _LOGGER.error("zone '%s' unknown source in selected '%s'", zone, source)
+                _LOGGER.error("set_source zone '%s' unknown source '%s'", zone, source)
                 return None
             _LOGGER.debug("set_source: zone='%s' source='%s'", zone, source)
             if zone == ZONE2_NAME:
-                source = self._receiver.zone2_source("=", self._source_name_to_id[source])
+                _ = self._receiver.zone2_source("=", self._source_name_to_id[source])
             else:
-                source = self._receiver.main_source("=", self._source_name_to_id[source])
+                _ = self._receiver.main_source("=", self._source_name_to_id[source])
         except Exception as e:
-            _LOGGER.error("power: error: %s", e)
+            _LOGGER.error("set_source: error: %s", e)
+
+    def get_listening_mode(self, zone: str) -> str | None:
+        try:
+            if zone == ZONE2_NAME:
+                mode = self._receiver.zone2_listeningmode("?")
+            else:
+                mode = self._receiver.main_listeningmode("?")
+            if mode is not None and mode in self._listening_modes:
+                _LOGGER.debug("get_listening_mode: zone='%s' mode='%s'", zone, mode)
+                return mode
+            else:
+                _LOGGER.error(
+                    "get_listening_mode: zone='%s', unknown mode '%s'",
+                    zone,
+                    mode,
+                )
+        except Exception as e:
+            _LOGGER.error("get_listening_mode: error: %s", e)
+
+    def set_listening_mode(self, zone: str, mode: str) -> None:
+        try:
+            if mode is None or mode not in self._listening_modes:
+                _LOGGER.error("set_listening_mode: zone '%s' unknown mode '%s'", zone, mode)
+                return None
+            _LOGGER.debug("set_listening_mode: zone='%s' mode='%s'", zone, mode)
+            if zone == ZONE2_NAME:
+                _ = self._receiver.zone2_listeningmode("=", mode)
+            else:
+                _ = self._receiver.main_listeningmode("=", mode)
+        except Exception as e:
+            _LOGGER.error("set_listening_mode: error: %s", e)
 
     def power(self, zone: str, state: str) -> None:
         try:
