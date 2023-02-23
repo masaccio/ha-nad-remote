@@ -6,7 +6,6 @@
   "documentation": "https://github.com/masaccio/ha-nad-remote",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/masaccio/ha-nad-remote/issues",
-  "requirements": [ "pysnooper" ],
   "version": "1.3.0",
   "zeroconf": [ "_telnet._tcp.local." ]
 }
