@@ -36,7 +36,6 @@ class NADApiClient:
         self._volume_range[MAIN_NAME] = self.volume_range(MAIN_NAME)
         if self.has_zone2:
             self._volume_range[ZONE2_NAME] = self.volume_range(ZONE2_NAME)
-        _LOGGER.debug("self._volume_range=%s", self._volume_range)
 
     def get_model(self):
         try:
@@ -243,7 +242,7 @@ class NADApiClient:
             else:
                 min_vol = self._capabilities.get("main_volume_min", DEFAULT_MIN_VOLUME)
                 max_vol = self._capabilities.get("main_volume_max", DEFAULT_MAX_VOLUME)
-            _LOGGER.debug("volume_range: min=%s, max=%s", min_vol, max_vol)
+            _LOGGER.debug("volume_range: zone=%s, min=%s, max=%s", zone, min_vol, max_vol)
             return (float(min_vol), float(max_vol))
         except Exception as e:
             _LOGGER.error("Error fetching capabilities: %s", e)
