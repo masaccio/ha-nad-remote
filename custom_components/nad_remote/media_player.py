@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, CONF_MAX_VOLUME, CONF_MIN_VOLUME, MAIN_NAME, ZONE2_NAME
+from .const import DOMAIN, MAIN_NAME, ZONE2_NAME, VOLUME_INCREMENT
 from .entity import NADEntity
 
 
@@ -41,15 +41,6 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
 
     _attr_icon = "mdi:speaker-multiple"
     _attr_device_class = MediaPlayerDeviceClass.RECEIVER
-    _attr_supported_features: MediaPlayerEntityFeature = (
-        MediaPlayerEntityFeature.VOLUME_SET
-        | MediaPlayerEntityFeature.VOLUME_MUTE
-        | MediaPlayerEntityFeature.VOLUME_STEP
-        | MediaPlayerEntityFeature.TURN_ON
-        | MediaPlayerEntityFeature.TURN_OFF
-        | MediaPlayerEntityFeature.SELECT_SOURCE
-        | MediaPlayerEntityFeature.SELECT_SOUND_MODE
-    )
 
     def __init__(self, zone: str, coordinator: DataUpdateCoordinator, config_entry: ConfigEntry):
         self.zone = zone
@@ -57,6 +48,20 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         self.config_entry = config_entry
         self.zone = zone
         super().__init__(coordinator, config_entry)
+
+    @property
+    def supported_features(self):
+        features = (
+            MediaPlayerEntityFeature.VOLUME_SET
+            | MediaPlayerEntityFeature.VOLUME_MUTE
+            | MediaPlayerEntityFeature.VOLUME_STEP
+            | MediaPlayerEntityFeature.TURN_ON
+            | MediaPlayerEntityFeature.TURN_OFF
+            | MediaPlayerEntityFeature.SELECT_SOURCE
+        )
+        if self.zone == MAIN_NAME:
+            features |= MediaPlayerEntityFeature.SELECT_SOUND_MODE
+        return features
 
     @property
     def unique_id(self):
@@ -113,25 +118,25 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         return self.coordinator.api.muted(self.zone)
 
     def mute_volume(self, mute: bool) -> None:
-        return super().mute_volume(mute)
+        """Toggle the mute setting"""
+        self.coordinator.api.mute(self.zone, not self.is_volume_muted)
 
     def volume_up(self) -> None:
         """Volume up the media player."""
-        if self.zone == ZONE2_NAME:
-            self.coordinator.api._receiver.zone2_volume("+")
-        else:
-            self.coordinator.api._receiver.main_volume("-")
+        volume_level = min(0.0, self.volume_level - VOLUME_INCREMENT)
+        self.set_volume_level(volume_level)
 
     def volume_down(self) -> None:
         """Volume down the media player."""
-        if self.zone == ZONE2_NAME:
-            self.coordinator.api._receiver.zone2_volume("-")
-        else:
-            self.coordinator.api._receiver.main_volume("-")
+        volume_level = (self.volume_level + VOLUME_INCREMENT) % 1.0
+        self.set_volume_level(volume_level)
 
     @property
     def sound_mode(self) -> str | None:
-        return self.coordinator.api.get_listening_mode(self.zone)
+        if self.zone == MAIN_NAME:
+            return self.coordinator.api.get_listening_mode(self.zone)
+        else:
+            return None
 
     def select_sound_mode(self, sound_mode: str) -> None:
         self.coordinator.api.set_listening_mode(self.zone, sound_mode)

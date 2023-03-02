@@ -3,6 +3,7 @@ import logging
 import re
 import sys
 from typing import Tuple
+from math import floor
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -82,14 +83,15 @@ class NADApiClient:
         return source_list
 
     def volume_to_ha(self, zone: str, volume: float) -> float:
-        volume_range = self._volume_range[zone][1] - self._volume_range[zone][0]
+        volume_range = abs(self._volume_range[zone][1]) + abs(self._volume_range[zone][0])
         volume_min = self._volume_range[zone][0]
         return abs(volume - volume_min) / volume_range
 
     def volume_from_ha(self, zone: str, volume: float) -> float:
-        volume_range = self._volume_range[zone][1] - self._volume_range[zone][0]
+        volume_range = abs(self._volume_range[zone][1]) + abs(self._volume_range[zone][0])
         volume_min = self._volume_range[zone][0]
-        return volume * volume_range - volume_min
+        volume_ha = floor((volume * volume_range) + volume_min)
+        return volume_ha
 
     @property
     def has_zone2(self) -> bool:
@@ -144,9 +146,8 @@ class NADApiClient:
     def get_listening_mode(self, zone: str) -> str | None:
         try:
             if zone == ZONE2_NAME:
-                mode = self._receiver.zone2_listeningmode("?")
-            else:
-                mode = self._receiver.main_listeningmode("?")
+                return None
+            mode = self._receiver.main_listeningmode("?")
             if mode is not None and mode in self._listening_modes:
                 _LOGGER.debug("get_listening_mode: zone='%s' mode='%s'", zone, mode)
                 return mode
@@ -161,14 +162,13 @@ class NADApiClient:
 
     def set_listening_mode(self, zone: str, mode: str) -> None:
         try:
+            if zone == ZONE2_NAME:
+                return
             if mode is None or mode not in self._listening_modes:
                 _LOGGER.error("set_listening_mode: zone '%s' unknown mode '%s'", zone, mode)
                 return None
             _LOGGER.debug("set_listening_mode: zone='%s' mode='%s'", zone, mode)
-            if zone == ZONE2_NAME:
-                _ = self._receiver.zone2_listeningmode("=", mode)
-            else:
-                _ = self._receiver.main_listeningmode("=", mode)
+            _ = self._receiver.zone2_listeningmode("=", mode)
         except Exception as e:
             _LOGGER.error("set_listening_mode: error: %s", e)
 
@@ -194,8 +194,13 @@ class NADApiClient:
                 status = self._receiver.zone2_volume("?")
             else:
                 status = self._receiver.main_volume("?")
+            if "." not in str(status):
+                _LOGGER.error("get_volume_level: unknown volume status '%s'", status)
+                return None
+
             volume = self.volume_to_ha(zone, float(status))
-            _LOGGER.debug("get_volume_level: zone=%s, dB=%s, ha-volume=%s", zone, status, volume)
+            _LOGGER.debug("get_volume_level: zone=%s, dB=%s, ha-volume=%.2f", zone, status, volume)
+            return volume
         except Exception as e:
             _LOGGER.error("get_volume_level: error: %s", e)
 
@@ -205,7 +210,10 @@ class NADApiClient:
                 status = self._receiver.zone2_volume("=", self.volume_from_ha(zone, volume))
             else:
                 status = self._receiver.main_volume("=", self.volume_from_ha(zone, volume))
-            _LOGGER.debug("set_volume_level: zone=%s, dB=%s, ha-volume=%s", zone, status, volume)
+            if "." not in str(status):
+                _LOGGER.error("get_volume_level: unknown volume status '%s'", status)
+                return None
+            _LOGGER.debug("set_volume_level: zone=%s, dB=%s, ha-volume=%.2f", zone, status, volume)
         except Exception as e:
             _LOGGER.error("set_volume_level: error: %s", e)
 

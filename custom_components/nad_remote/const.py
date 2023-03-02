@@ -13,11 +13,9 @@ ISSUE_URL = "https://github.com/masaccio/nad_remote/issues"
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
-CONF_MIN_VOLUME = "min_volume"
-CONF_MAX_VOLUME = "max_volume"
-
 DEFAULT_MIN_VOLUME = -92
 DEFAULT_MAX_VOLUME = -20
+VOLUME_INCREMENT = 0.05
 
 ZONE2_NAME = "Zone2"
 MAIN_NAME = "Main"
