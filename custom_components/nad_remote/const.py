@@ -22,14 +22,15 @@ MAIN_NAME = "Main"
 
 LISTENING_MODES = [
     "None",
-    "ProLogic",
-    "SurroundEX",
-    "PLIIMovie",
-    "PLIIMusic",
-    "NEO6Cinema",
+    "AnalogBypass",
+    "DolbySurround",
     "EARS",
     "EnhancedStereo",
-    "StereoDownmix",
-    "AnalogBypass",
     "NEO6Music",
+    "NEO6Cinema",
+    "PLIIMovie",
+    "PLIIMusic",
+    "ProLogic",
+    "SurroundEX",
+    "StereoDownmix",
 ]

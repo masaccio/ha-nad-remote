@@ -7,7 +7,7 @@ from math import floor
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNKNOWN
+from homeassistant.components.media_player import MediaPlayerState
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -107,14 +107,14 @@ class NADApiClient:
         else:
             status = self._receiver.main_power("?")
         if status == "On":
-            _LOGGER.debug("ON: state: zone=%s, status=%s", zone, status)
-            return STATE_ON
+            _LOGGER.debug("get_power_state: zone=%s, status=%s", zone, status)
+            return MediaPlayerState.ON
         elif status == "Off":
-            _LOGGER.debug("OFF: state: zone=%s, status=%s", zone, status)
-            return STATE_OFF
+            _LOGGER.debug("get_power_state: zone=%s, status=%s", zone, status)
+            return MediaPlayerState.OFF
         else:
-            _LOGGER.warning("UNKNOWN: state: zone=%s, status=%s", zone, status)
-            return STATE_UNKNOWN
+            _LOGGER.warning("get_power_state: zone=%s, status=%s", zone, status)
+            return None
 
     def get_source(self, zone: str) -> str | None:
         try:
@@ -176,12 +176,12 @@ class NADApiClient:
         try:
             _LOGGER.debug("power: zone=%s, state=%s", zone, state)
             if zone == ZONE2_NAME:
-                if state == STATE_ON:
+                if state == MediaPlayerState.ON:
                     self._receiver.zone2_power("=", "On")
                 else:
                     self._receiver.zone2_power("=", "Off")
             else:
-                if state == STATE_ON:
+                if state == MediaPlayerState.ON:
                     self._receiver.main_power("=", "On")
                 else:
                     self._receiver.main_power("=", "Off")

@@ -6,16 +6,17 @@ from homeassistant.components.media_player import (
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
+    MediaPlayerState,
 )
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, STATE_OFF, STATE_ON, STATE_UNKNOWN
+from homeassistant.core import callback
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, STATE_OFF, STATE_ON, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, MAIN_NAME, ZONE2_NAME, VOLUME_INCREMENT
+from .const import DOMAIN, MAIN_NAME, VOLUME_INCREMENT, ZONE2_NAME
 from .entity import NADEntity
-
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -72,19 +73,24 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
     def name(self):
         return self.unique_id
 
-    def update(self) -> None:
-        self._attr_state = self.coordinator.api.get_power_state(self.zone)
-        self._attr_source = self.coordinator.api.get_source(self.zone)
-
-    @property
-    def source_list(self) -> list[str] | None:
-        """Get a list of available sources for the receiver"""
-        return self.coordinator.api.get_sources()
-
-    @property
-    def source(self) -> str | None:
-        """Get the zone's current source"""
-        return self.coordinator.api.get_source(self.zone)
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        _LOGGER.debug("_handle_coordinator_update: zone=%s", self.zone)
+        try:
+            self._attr_state = self.coordinator.api.get_power_state(self.zone)
+            _LOGGER.debug("_handle_coordinator_update: state=%s", self.state)
+            if self.state == MediaPlayerState.ON:
+                self._attr_source = self.coordinator.api.get_source(self.zone)
+                self._attr_source_list = self.coordinator.api.get_sources()
+                self._attr_volume_level = self.coordinator.api.get_volume_level(self.zone)
+                self._attr_is_volume_muted = self.coordinator.api.muted(self.zone)
+                if self.zone == MAIN_NAME:
+                    self._attr_sound_mode = self.coordinator.api.get_listening_mode(self.zone)
+                else:
+                    self._attr_sound_mode = None
+        except Exception as e:
+            _LOGGER.warning("update failed: zone='%s': %s", self.zone, e)
+        self.async_write_ha_state()
 
     def select_source(self, source: str) -> None:
         """Select a source in the receiver"""
@@ -106,16 +112,8 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         else:
             self.turn_off()
 
-    @property
-    def volume_level(self) -> float | None:
-        return self.coordinator.api.get_volume_level(self.zone)
-
     def set_volume_level(self, volume: float) -> None:
         self.coordinator.api.set_volume_level(self.zone, volume)
-
-    @property
-    def is_volume_muted(self) -> bool | None:
-        return self.coordinator.api.muted(self.zone)
 
     def mute_volume(self, mute: bool) -> None:
         """Toggle the mute setting"""
@@ -130,13 +128,6 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         """Volume down the media player."""
         volume_level = (self.volume_level + VOLUME_INCREMENT) % 1.0
         self.set_volume_level(volume_level)
-
-    @property
-    def sound_mode(self) -> str | None:
-        if self.zone == MAIN_NAME:
-            return self.coordinator.api.get_listening_mode(self.zone)
-        else:
-            return None
 
     def select_sound_mode(self, sound_mode: str) -> None:
         self.coordinator.api.set_listening_mode(self.zone, sound_mode)
