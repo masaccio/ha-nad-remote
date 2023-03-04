@@ -47,9 +47,5 @@ CMDS: Dict[str, Dict[str, Dict[str, Union[str, Iterable[str]]]]] = {
         "source": {"cmd": "Zone2.Source", "supported_operators": ["+", "-", "=", "?"]},
         "volume": {"cmd": "Zone2.Volume", "supported_operators": ["+", "-", "=", "?"]},
         "mute": {"cmd": "Zone2.Mute", "supported_operators": ["+", "-", "=", "?"]},
-        "listeningmode": {
-            "cmd": "Zone2.ListeningMode",
-            "supported_operators": ["+", "-", "=", "?"],
-        },
     },
 }
