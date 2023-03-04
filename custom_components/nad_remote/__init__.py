@@ -8,15 +8,15 @@ import asyncio
 import logging
 from datetime import timedelta
 
-
+from homeassistant.components.media_player import MediaPlayerState
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, Platform
+from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import Config, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import NADApiClient
-from .const import DOMAIN, SCAN_INTERVAL
+from .const import DOMAIN, SCAN_INTERVAL, MAIN_NAME, ZONE2_NAME
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -66,15 +66,36 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize."""
         self.api = client
         self.platforms = []
+        self.power_state = {}
+        self.volume_level = {}
+        self.source = None
+        self.source_list = {}
+        self.volume_level = {}
+        self.is_volume_muted = {}
+        self.sound_mode = None
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
     async def _async_update_data(self):
-        """Update data via library."""
+        """Update data via API."""
         try:
-            self.capabilities = self.api.get_capabilities()
-            return True
+            if self.api.has_zone2:
+                zones = [MAIN_NAME, ZONE2_NAME]
+            else:
+                zones = [MAIN_NAME]
+            update = False
+            for zone in zones:
+                self.power_state[zone] = self.api.get_power_state(zone)
+                if self.power_state[zone] == MediaPlayerState.ON:
+                    update = True
+                    self.volume_level[zone] = self.api.get_volume_level(zone)
+                    self.is_volume_muted[zone] = self.api.muted(zone)
+            if update:
+                self.source_list = self.api.get_sources()
+                self.source = self.api.get_source(MAIN_NAME)
+                self.sound_mode = self.api.get_listening_mode(MAIN_NAME)
+            return update
         except Exception as e:
-            _LOGGER.error("Error fetching capabilities: %s", e)
+            _LOGGER.error("Error updating state: %s", e)
             raise UpdateFailed() from e
 
 

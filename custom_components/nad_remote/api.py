@@ -8,12 +8,11 @@ from math import floor
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 from homeassistant.components.media_player import MediaPlayerState
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .const import (
     DEFAULT_MAX_VOLUME,
     DEFAULT_MIN_VOLUME,
-    DOMAIN,
     MAIN_NAME,
     ZONE2_NAME,
     LISTENING_MODES,
@@ -35,6 +34,13 @@ class NADApiClient:
         self._listening_modes = LISTENING_MODES
         self._volume_range = {}
         self._volume_range[MAIN_NAME] = self.volume_range(MAIN_NAME)
+
+        try:
+            _ = self._receiver.zone2_source("?")
+            self.has_zone2 = True
+        except ValueError:
+            self.has_zone2 = False
+
         if self.has_zone2:
             self._volume_range[ZONE2_NAME] = self.volume_range(ZONE2_NAME)
 
@@ -92,14 +98,6 @@ class NADApiClient:
         volume_min = self._volume_range[zone][0]
         volume_ha = floor((volume * volume_range) + volume_min)
         return volume_ha
-
-    @property
-    def has_zone2(self) -> bool:
-        try:
-            _ = self._receiver.zone2_source("?")
-            return True
-        except ValueError:
-            return False
 
     def get_power_state(self, zone: str) -> str:
         if zone == ZONE2_NAME:

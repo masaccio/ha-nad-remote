@@ -58,10 +58,11 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
             | MediaPlayerEntityFeature.VOLUME_STEP
             | MediaPlayerEntityFeature.TURN_ON
             | MediaPlayerEntityFeature.TURN_OFF
-            | MediaPlayerEntityFeature.SELECT_SOURCE
         )
         if self.zone == MAIN_NAME:
-            features |= MediaPlayerEntityFeature.SELECT_SOUND_MODE
+            features |= (
+                MediaPlayerEntityFeature.SELECT_SOUND_MODE | MediaPlayerEntityFeature.SELECT_SOURCE
+            )
         return features
 
     @property
@@ -75,34 +76,55 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        _LOGGER.debug("_handle_coordinator_update: zone=%s", self.zone)
+        """Handle updated data from the coordinator."""
         try:
-            self._attr_state = self.coordinator.api.get_power_state(self.zone)
-            _LOGGER.debug("_handle_coordinator_update: state=%s", self.state)
-            if self.state == MediaPlayerState.ON:
-                self._attr_source = self.coordinator.api.get_source(self.zone)
-                self._attr_source_list = self.coordinator.api.get_sources()
-                self._attr_volume_level = self.coordinator.api.get_volume_level(self.zone)
-                self._attr_is_volume_muted = self.coordinator.api.muted(self.zone)
+            power_state = self.coordinator.power_state[self.zone]
+            if power_state == MediaPlayerState.ON:
+                self._attr_state = power_state
+                self._attr_source = self.coordinator.source
+                self._attr_source_list = self.coordinator.source_list
+                self._attr_volume_level = self.coordinator.volume_level[self.zone]
+                self._attr_is_volume_muted = self.coordinator.is_volume_muted[self.zone]
                 if self.zone == MAIN_NAME:
-                    self._attr_sound_mode = self.coordinator.api.get_listening_mode(self.zone)
+                    self._attr_sound_mode = self.coordinator.sound_mode
                 else:
                     self._attr_sound_mode = None
+            _LOGGER.debug("data update: zone=%s, state=%s", self.zone, power_state)
+            self.async_write_ha_state()
+        except Exception as e:
+            _LOGGER.warning("data update failed: zone='%s': %s", self.zone, e)
+
+    def update(self):
+        try:
+            power_state = self.coordinator.power_state[self.zone]
+            if power_state == MediaPlayerState.ON:
+                self._attr_state = power_state
+                self._attr_source = self.coordinator.source
+                self._attr_source_list = self.coordinator.source_list
+                self._attr_volume_level = self.coordinator.volume_level[self.zone]
+                self._attr_is_volume_muted = self.coordinator.is_volume_muted[self.zone]
+                if self.zone == MAIN_NAME:
+                    self._attr_sound_mode = self.coordinator.sound_mode
+                else:
+                    self._attr_sound_mode = None
+            _LOGGER.debug("update: zone=%s, state=%s", self.zone, power_state)
         except Exception as e:
             _LOGGER.warning("update failed: zone='%s': %s", self.zone, e)
-        self.async_write_ha_state()
 
     def select_source(self, source: str) -> None:
         """Select a source in the receiver"""
         self.coordinator.api.set_source(self.zone, source)
+        self.schedule_update_ha_state()
 
     def turn_off(self) -> None:
         """Turn the receiver zone off."""
         self.coordinator.api.power(self.zone, STATE_OFF)
+        self.schedule_update_ha_state()
 
     def turn_on(self) -> None:
         """Turn the receiver zone on."""
         self.coordinator.api.power(self.zone, STATE_ON)
+        self.schedule_update_ha_state()
 
     def toggle(self) -> None:
         """Toggle the power on the receiver"""
@@ -114,10 +136,12 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
 
     def set_volume_level(self, volume: float) -> None:
         self.coordinator.api.set_volume_level(self.zone, volume)
+        self.schedule_update_ha_state()
 
     def mute_volume(self, mute: bool) -> None:
         """Toggle the mute setting"""
         self.coordinator.api.mute(self.zone, not self.is_volume_muted)
+        self.schedule_update_ha_state()
 
     def volume_up(self) -> None:
         """Volume up the media player."""

@@ -11,7 +11,7 @@ VERSION = "0.1.0"
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
 ISSUE_URL = "https://github.com/masaccio/nad_remote/issues"
 
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=5)
 
 DEFAULT_MIN_VOLUME = -92
 DEFAULT_MAX_VOLUME = -20
