@@ -78,6 +78,7 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via API."""
         try:
+            _LOGGER.debug("updating data via coordinator")
             if self.api.has_zone2:
                 zones = [MAIN_NAME, ZONE2_NAME]
             else:
@@ -93,7 +94,7 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
                 self.source_list = self.api.get_sources()
                 self.source = self.api.get_source(MAIN_NAME)
                 self.sound_mode = self.api.get_listening_mode(MAIN_NAME)
-            return update
+            return self
         except Exception as e:
             _LOGGER.error("Error updating state: %s", e)
             raise UpdateFailed() from e
