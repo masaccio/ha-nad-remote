@@ -192,9 +192,6 @@ class NADApiClient:
                 status = self._receiver.zone2_volume("?")
             else:
                 status = self._receiver.main_volume("?")
-            if "." not in str(status):
-                _LOGGER.error("get_volume_level: unknown volume status '%s'", status)
-                return None
 
             volume = self.volume_to_ha(zone, float(status))
             _LOGGER.debug("get_volume_level: zone=%s, dB=%s, ha-volume=%.2f", zone, status, volume)
