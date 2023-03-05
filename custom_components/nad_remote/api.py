@@ -81,11 +81,11 @@ class NADApiClient:
                             self._sources[source_id] = None
                         else:
                             self._sources[source_id] = self._capabilities[s_name]
+                _LOGGER.debug("get_sources sources=%s", source_list)
             except Exception as e:
-                _LOGGER.error("Error fetching capabilities: %s", e)
+                _LOGGER.error("Error fetching sources: %s", e)
 
         source_list = [v for k, v in self._sources.items() if v is not None]
-        _LOGGER.debug("get_sources sources=%s", source_list)
         return source_list
 
     def volume_to_ha(self, zone: str, volume: float) -> float:
