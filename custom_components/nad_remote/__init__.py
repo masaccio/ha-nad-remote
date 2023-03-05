@@ -7,6 +7,7 @@ https://github.com/masaccio/nad_remote
 import asyncio
 import logging
 from datetime import timedelta
+from dataclasses import dataclass, field
 
 from homeassistant.components.media_player import MediaPlayerState
 from homeassistant.config_entries import ConfigEntry
@@ -55,6 +56,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
+@dataclass
+class NADState:
+    # Dict entry for each available zone
+    power_state: dict = field(default_factory=dict)
+    source: dict = field(default_factory=dict)
+    source_list: dict = field(default_factory=dict)
+    is_volume_muted: dict = field(default_factory=dict)
+    volume_level: dict = field(default_factory=dict)
+    # Sound mode applies to all zones
+    sound_mode: str = None
+
+
 class NADDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
@@ -66,38 +79,32 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize."""
         self.api = client
         self.platforms = []
-        self.power_state = {}
-        self.volume_level = {}
-        self.source = None
-        self.source_list = {}
-        self.volume_level = {}
-        self.is_volume_muted = {}
-        self.sound_mode = None
+        self.model = None
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
-    async def _async_update_data(self):
-        """Update data via API."""
+    async def _async_update_data(self) -> NADState:
+        """Fetch and cache data from the API"""
         try:
-            _LOGGER.debug("updating data via coordinator")
+            if 
             if self.api.has_zone2:
                 zones = [MAIN_NAME, ZONE2_NAME]
             else:
                 zones = [MAIN_NAME]
             update = False
+            data = NADState()
             for zone in zones:
-                self.power_state[zone] = self.api.get_power_state(zone)
-                if self.power_state[zone] == MediaPlayerState.ON:
+                data.power_state[zone] = self.api.get_power_state(zone)
+                if data.power_state[zone] == MediaPlayerState.ON:
+                    data.volume_level[zone] = self.api.get_volume_level(zone)
+                    data.is_volume_muted[zone] = self.api.muted(zone)
+                    data.source[zone] = self.api.get_source(MAIN_NAME)
                     update = True
-                    self.volume_level[zone] = self.api.get_volume_level(zone)
-                    self.is_volume_muted[zone] = self.api.muted(zone)
             if update:
-                self.source_list = self.api.get_sources()
-                self.source = self.api.get_source(MAIN_NAME)
-                self.sound_mode = self.api.get_listening_mode(MAIN_NAME)
-            return self
+                data.source_list = self.api.get_sources()
+                data.sound_mode = self.api.get_listening_mode(MAIN_NAME)
+            return data
         except Exception as e:
-            _LOGGER.error("Error updating state: %s", e)
-            raise UpdateFailed() from e
+            raise UpdateFailed(f"Error fetching data from API: {e}")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
