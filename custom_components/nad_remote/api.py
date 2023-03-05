@@ -81,7 +81,7 @@ class NADApiClient:
                             self._sources[source_id] = None
                         else:
                             self._sources[source_id] = self._capabilities[s_name]
-                _LOGGER.debug("get_sources sources=%s", source_list)
+                _LOGGER.debug("get_sources sources=%s", self._sources.values())
             except Exception as e:
                 _LOGGER.error("Error fetching sources: %s", e)
 
