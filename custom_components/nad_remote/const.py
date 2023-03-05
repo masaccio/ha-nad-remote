@@ -4,7 +4,7 @@ from datetime import timedelta
 NAME = "NAD Amplifer remote control"
 DOMAIN = "nad_remote"
 
-SCAN_INTERVAL = timedelta(seconds=5)
+SCAN_INTERVAL = timedelta(seconds=30)
 
 DEFAULT_MIN_VOLUME = -92
 DEFAULT_MAX_VOLUME = -20
