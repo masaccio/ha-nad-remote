@@ -85,7 +85,6 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> NADState:
         """Fetch and cache data from the API"""
         try:
-            if 
             if self.api.has_zone2:
                 zones = [MAIN_NAME, ZONE2_NAME]
             else:
