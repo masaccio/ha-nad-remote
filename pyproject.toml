@@ -34,12 +34,13 @@ requires = ["poetry-core"]
 
 [tool.coverage.run]
 branch = true
+omit = ["custom_components/nad_remote/nad_receiver/*.py"]
 
 [tool.coverage.html]
 directory = "coverage_html_report"
 
 [tool.pytest.ini_options]
-addopts = "-W ignore::DeprecationWarning --cov=custom_components/nad2"
+addopts = "-W ignore::DeprecationWarning --cov=custom_components/nad_remote"
 minversion = 6.0
 testpaths = ["tests"]
 
