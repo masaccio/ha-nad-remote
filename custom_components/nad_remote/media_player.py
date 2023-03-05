@@ -94,48 +94,50 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
         except Exception as e:
             _LOGGER.warning("data update failed: zone='%s': %s", self.zone, e)
 
-    def select_source(self, source: str) -> None:
+    async def async_select_source(self, source: str) -> None:
         """Select a source in the receiver"""
         self.coordinator.api.set_source(self.zone, source)
-        self.coordinator.async_request_refresh()
+        await self.coordinator.async_request_refresh()
 
-    def turn_off(self) -> None:
+    async def async_turn_off(self) -> None:
         """Turn the receiver zone off."""
         self.coordinator.api.power(self.zone, STATE_OFF)
-        self.coordinator.async_request_refresh()
+        await self.coordinator.async_request_refresh()
 
-    def turn_on(self) -> None:
+    async def async_turn_on(self) -> None:
         """Turn the receiver zone on."""
         self.coordinator.api.power(self.zone, STATE_ON)
-        self.coordinator.async_request_refresh()
+        await self.coordinator.async_request_refresh()
 
-    def toggle(self) -> None:
+    async def async_toggle(self) -> None:
         """Toggle the power on the receiver"""
         state = self.coordinator.api.get_power_state(self.zone)
         if state == STATE_OFF:
-            self.turn_on()
+            await self.async_turn_on()
         else:
-            self.turn_off()
+            await self.async_turn_off()
 
-    def set_volume_level(self, volume: float) -> None:
+    async def async_set_volume_level(self, volume: float) -> None:
         self.coordinator.api.set_volume_level(self.zone, volume)
-        self.coordinator.async_request_refresh()
+        await self.coordinator.async_request_refresh()
 
-    def mute_volume(self, mute: bool) -> None:
+    async def async_mute_volume(self, mute: bool) -> None:
         """Toggle the mute setting"""
         self.coordinator.api.mute(self.zone, not self.is_volume_muted)
-        self.coordinator.async_request_refresh()
+        await self.coordinator.async_request_refresh()
 
-    def volume_up(self) -> None:
+    async def async_volume_up(self) -> None:
         """Volume up the media player."""
         volume_level = min(0.0, self.volume_level - VOLUME_INCREMENT)
-        self.set_volume_level(volume_level)
+        await self.set_volume_level(volume_level)
+        await self.coordinator.async_request_refresh()
 
-    def volume_down(self) -> None:
+    async def async_volume_down(self) -> None:
         """Volume down the media player."""
         volume_level = (self.volume_level + VOLUME_INCREMENT) % 1.0
-        self.set_volume_level(volume_level)
+        await self.set_volume_level(volume_level)
+        await self.coordinator.async_request_refresh()
 
-    def select_sound_mode(self, sound_mode: str) -> None:
-        self.coordinator.api.set_listening_mode(self.zone, sound_mode)
-        self.coordinator.async_request_refresh()
+    async def async_select_sound_mode(self, sound_mode: str) -> None:
+        await self.coordinator.api.set_listening_mode(self.zone, sound_mode)
+        await self.coordinator.async_request_refresh()
