@@ -1,15 +1,8 @@
 """Constants for NAD Amplifer remote control."""
-
 from datetime import timedelta
 
-# Base component constants
 NAME = "NAD Amplifer remote control"
 DOMAIN = "nad_remote"
-DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.1.0"
-
-ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
-ISSUE_URL = "https://github.com/masaccio/nad_remote/issues"
 
 SCAN_INTERVAL = timedelta(seconds=5)
 

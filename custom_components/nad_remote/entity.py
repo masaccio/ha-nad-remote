@@ -3,9 +3,7 @@ import logging
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTRIBUTION, DOMAIN, NAME, VERSION
-
-_LOGGER: logging.Logger = logging.getLogger(__package__)
+from .const import DOMAIN, NAME
 
 
 class NADEntity(CoordinatorEntity):
@@ -23,15 +21,5 @@ class NADEntity(CoordinatorEntity):
         return {
             "identifiers": {(DOMAIN, self.unique_id)},
             "name": NAME,
-            "model": VERSION,
             "manufacturer": NAME,
-        }
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes."""
-        return {
-            "attribution": ATTRIBUTION,
-            "id": str(self.coordinator.data.get("id")),
-            "integration": DOMAIN,
         }
