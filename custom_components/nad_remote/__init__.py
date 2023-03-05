@@ -96,7 +96,7 @@ class NADDataUpdateCoordinator(DataUpdateCoordinator):
                 if data.power_state[zone] == MediaPlayerState.ON:
                     data.volume_level[zone] = self.api.get_volume_level(zone)
                     data.is_volume_muted[zone] = self.api.muted(zone)
-                    data.source[zone] = self.api.get_source(MAIN_NAME)
+                    data.source[zone] = self.api.get_source(zone)
                     update = True
             if update:
                 data.source_list = self.api.get_sources()
