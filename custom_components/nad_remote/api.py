@@ -48,25 +48,25 @@ class NADApiClient:
         try:
             response = self._receiver.main_model("?")
             if not re.match(r"^\w+\d+", response):
-                _LOGGER.debug("Amplifier model '%s' not recognised", response)
+                _LOGGER.debug("receiver model '%s' not recognised", response)
                 return None
             else:
-                _LOGGER.debug("Amplifier model='%s'", response)
+                _LOGGER.debug("receiver model='%s'", response)
                 return response
         except Exception as e:
-            _LOGGER.error("Error checking amplifier model: %s", e)
+            _LOGGER.error("model check failed: %s", e)
 
     def get_capabilities(self) -> dict | None:
-        """Fetch status of amplifier to get capabilities"""
+        """Fetch status of receiver to get capabilities"""
         if hasattr(self, "_capabilities"):
             return self._capabilities
         try:
             self._capabilities = self._receiver.status_all()
             if self._capabilities is None:
-                _LOGGER.error("Error fetching amplifier capabilities: no reuslts")
+                _LOGGER.error("capability check failed: no results")
             return self._capabilities
         except Exception as e:
-            _LOGGER.error("Error fetching amplifier capabilities: %s", e)
+            _LOGGER.error("capability check failed: %s", e)
 
     def get_sources(self) -> dict | None:
         """Discover list of sources"""
@@ -83,7 +83,7 @@ class NADApiClient:
                             self._sources[source_id] = self._capabilities[s_name]
                 _LOGGER.debug("get_sources sources=%s", self._sources.values())
             except Exception as e:
-                _LOGGER.error("Error fetching sources: %s", e)
+                _LOGGER.error("source check failed: %s", e)
 
         source_list = [v for k, v in self._sources.items() if v is not None]
         return source_list
