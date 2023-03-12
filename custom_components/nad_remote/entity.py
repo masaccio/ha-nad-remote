@@ -2,8 +2,11 @@
 import logging
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.const import CONF_NAME
 
 from .const import DOMAIN, NAME
+
+_LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 class NADEntity(CoordinatorEntity):
@@ -20,6 +23,7 @@ class NADEntity(CoordinatorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self.unique_id)},
-            "name": NAME,
+            "name": f"{self.config_entry.title} ({self.zone})",
+            "model": self.model,
             "manufacturer": NAME,
         }

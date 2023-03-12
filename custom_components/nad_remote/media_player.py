@@ -75,6 +75,10 @@ class NADPlayer(NADEntity, MediaPlayerEntity):
     def name(self):
         return self.unique_id
 
+    @property
+    def model(self):
+        return self.coordinator.api.get_model()
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""

@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "NAD Amplifer remote control",
-        "description": "If you need help with the configuration have a look here: https://github.com/masaccio/nad2",
+        "description": "If you need help with the configuration, please visit https://github.com/masaccio/nad_remote",
         "data": {
           "host": "Hostname or IP address",
           "name": "Amplifier name",
@@ -11,7 +11,7 @@
         }
       },
       "discovery_confirm": {
-        "description": "Do you want to set up {name}?",
+        "description": "Do you want to set up {name} as a NAD remote?",
         "title": "NAD Amplifier discovery"
       }
     },
